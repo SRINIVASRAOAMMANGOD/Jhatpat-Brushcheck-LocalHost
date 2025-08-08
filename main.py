@@ -1,30 +1,39 @@
-import tensorflow as tf
+import os
 import numpy as np
+from keras.models import load_model
 from PIL import Image
-import cv2
+import os
 
-# Load model & labels
-model = tf.keras.models.load_model("model/keras_model.h5", compile=False)
-with open("model/labels.txt", "r") as f:
-    labels = [line.strip() for line in f.readlines()]
+images_folder = r"C:\Users\HP\Desktop\toothbrush_classifier\images\new_brush"
 
-# Image size used by Teachable Machine
-IMG_SIZE = (224, 224)
+# Test if folder exists
+print(os.path.exists(images_folder))  # Will print True if folder exists, False if not
 
-def preprocess_image(image_path):
-    img = Image.open(image_path).convert("RGB")
-    img = img.resize(IMG_SIZE)
-    img_array = np.array(img) / 255.0
-    return np.expand_dims(img_array, axis=0)
+# Paths
+model_path = r"C:\Users\HP\Desktop\toothbrush_classifier\model\keras_model.h5"
+labels_path = r"C:\Users\HP\Desktop\toothbrush_classifier\model\labels.txt"
+images_folder = r"C:\Users\HP\Desktop\toothbrush_classifier\images"
 
-def classify_image(image_path):
-    data = preprocess_image(image_path)
-    predictions = model.predict(data)
-    class_index = np.argmax(predictions)
-    confidence = predictions[0][class_index]
-    return labels[class_index], confidence
+# Load model and labels
+model = load_model(model_path, compile=False)
+class_names = open(labels_path, "r").read().splitlines()
+print("0 - new,1 - used,2 - Dirty,3 - Frayed\n")
+# Loop through all images in folder
+for img_name in os.listdir(images_folder):
+    if img_name.lower().endswith((".png", ".jpg", ".jpeg")):
+        img_path = os.path.join(images_folder, img_name)
 
-if __name__ == "__main__":
-    test_img = "images/new_brush.jpg"  # Change this path to test other images
-    label, confidence = classify_image(test_img)
-    print(f"Prediction: {label} ({confidence*100:.2f}%)")
+        # Load and preprocess image
+        image = Image.open(img_path).convert("RGB")
+        image = image.resize((224, 224))
+        image_array = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
+        image_array = (image_array / 127.5) - 1
+
+        # Predict
+        prediction = model.predict(image_array, verbose=0)
+        index = np.argmax(prediction)
+        class_name = class_names[index]
+        confidence_score = prediction[0][index]
+     
+        # Print result
+        print(f"{img_name} --> {class_name} ({confidence_score*100:.2f}%)")
