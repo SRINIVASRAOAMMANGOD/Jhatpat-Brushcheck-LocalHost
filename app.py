@@ -72,10 +72,14 @@ def upload_and_predict():
 
         prediction = model.predict(image_array)
         index = np.argmax(prediction)
-        class_name = class_names[index]
-        confidence = prediction[0][index] * 100
 
-        bacteria = bacteria_counts.get(class_name.lower(), "Unknown")
+        class_name = class_names[index].strip()
+        # Remove leading digits and spaces from class_name
+        processed_class_name = re.sub(r'^\d+\s*', '', class_name).lower()
+
+        confidence = prediction[0][index] * 100
+        bacteria = bacteria_counts.get(processed_class_name, "Unknown")
+
     except Exception as e:
         return f"Prediction error: {e}", 500
 
@@ -86,4 +90,4 @@ def upload_and_predict():
                            bacteria=bacteria)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=3000)
