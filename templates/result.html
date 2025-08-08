@@ -2,14 +2,108 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Result</title>
+  <title>Prediction Result</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #80deea);
+      margin: 0;
+      padding: 40px 20px;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      text-align: center;
+    }
+
+    main {
+      flex: 1;
+      background-color: #ffffffcc;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #004d40;
+      margin-bottom: 25px;
+      font-size: 2.2rem;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    }
+
+    img {
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+      margin-bottom: 25px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin: 10px 0;
+      color: #00695c;
+      font-weight: 600;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 30px;
+      text-decoration: none;
+      color: white;
+      background-color: #00796b;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 121, 107, 0.6);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    a:hover {
+      background-color: #004d40;
+      box-shadow: 0 6px 18px rgba(0, 77, 64, 0.8);
+    }
+
+    footer {
+      background-color: #004d40;
+      color: #a7ffeb;
+      text-align: center;
+      padding: 15px 20px;
+      font-size: 14px;
+      box-shadow: 0 -3px 10px rgba(0,0,0,0.2);
+      margin-top: auto;
+      width: 100%;
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+      p {
+        font-size: 1rem;
+      }
+      a {
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Prediction Result</h1>
-  <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image" width="300" />
-  <p><strong>Class:</strong> {{ prediction }}</p>
-  <p><strong>Confidence:</strong> {{ confidence }}%</p>
-  <p><strong>Breezel (bacteria count):</strong> {{ bacteria }}</p>
-  <a href="{{ url_for('index') }}">Try another image</a>
+  <main>
+    <h1>Prediction Result</h1>
+    <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image" />
+    <p><strong>Class:</strong> {{ prediction }}</p>
+    <p><strong>Confidence:</strong> {{ confidence }}%</p>
+    <p><strong>Breezel (bacteria count):</strong> {{ bacteria }}</p>
+    <a href="{{ url_for('index') }}">Try another image</a>
+  </main>
+
+  <footer>
+    &copy; 2025 Toothbrush Classifier Project. Made with ❤️ by SRINIVAS.
+  </footer>
 </body>
 </html>
