@@ -1,4 +1,4 @@
-new
-used
-dirty
-frayed
+0 new
+1 used
+2 dirty
+3 frayed
