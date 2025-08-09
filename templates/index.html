@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload or Capture Toothbrush Image</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #80deea);
+      margin: 0;
+      padding: 40px 20px;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      color: #004d40;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .option-buttons {
+      margin-bottom: 30px;
+    }
+
+    .option-buttons button {
+      padding: 12px 28px;
+      font-size: 16px;
+      margin: 0 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      color: white;
+      background-color: #00796b;
+      box-shadow: 0 4px 12px rgba(0, 121, 107, 0.6);
+      transition: background-color 0.3s ease;
+    }
+
+    .option-buttons button.active,
+    .option-buttons button:hover {
+      background-color: #004d40;
+    }
+
+    form {
+      background-color: #ffffffcc;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      max-width: 420px;
+      width: 100%;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 14px 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1.8px solid #00796b;
+      background-color: #e0f2f1;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="file"]:focus {
+      outline: none;
+      border-color: #004d40;
+      background-color: #b2dfdb;
+    }
+
+    #video {
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+      max-width: 100%;
+      margin: 20px 0;
+    }
+
+    #canvas {
+      display: none;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+      max-width: 100%;
+      margin-top: 20px;
+    }
+
+    #capture-btn {
+      margin-top: 10px;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #00796b;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 121, 107, 0.6);
+      transition: background-color 0.3s ease;
+    }
+
+    #capture-btn:hover {
+      background-color: #004d40;
+    }
+
+    button[type="submit"] {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px 0;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: #00796b;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 121, 107, 0.6);
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #004d40;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Upload or Capture Toothbrush Image</h1>
+
+  <div class="option-buttons">
+    <button id="upload-option" class="active">Upload Image</button>
+    <button id="webcam-option">Use Webcam</button>
+  </div>
+
+  <form id="image-form" action="{{ url_for('upload_and_predict') }}" method="POST" enctype="multipart/form-data">
+    
+    <!-- Upload input -->
+    <input type="file" name="image" id="file-input" accept="image/*" required />
+    
+    <!-- Webcam video & canvas -->
+    <video id="video" autoplay style="display:none;"></video>
+    <canvas id="canvas"></canvas>
+    <button type="button" id="capture-btn" style="display:none;">Capture Photo</button>
+
+    <!-- Hidden input to store webcam image data -->
+    <input type="hidden" name="captured_image" id="captured_image" />
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    const uploadOptionBtn = document.getElementById('upload-option');
+    const webcamOptionBtn = document.getElementById('webcam-option');
+    const fileInput = document.getElementById('file-input');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const capturedImageInput = document.getElementById('captured_image');
+    const form = document.getElementById('image-form');
+
+    let stream = null;
+
+    // Switch to Upload mode
+    function showUpload() {
+      uploadOptionBtn.classList.add('active');
+      webcamOptionBtn.classList.remove('active');
+
+      fileInput.style.display = 'block';
+
+      video.style.display = 'none';
+      captureBtn.style.display = 'none';
+      canvas.style.display = 'none';
+
+      capturedImageInput.value = '';
+      fileInput.required = true;
+
+      // Stop webcam if running
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+    }
+
+    // Switch to Webcam mode
+    function showWebcam() {
+      webcamOptionBtn.classList.add('active');
+      uploadOptionBtn.classList.remove('active');
+
+      fileInput.style.display = 'none';
+      fileInput.required = false;
+
+      video.style.display = 'block';
+      captureBtn.style.display = 'inline-block';
+      canvas.style.display = 'none';
+
+      capturedImageInput.value = '';
+
+      // Access webcam
+      if (!stream) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(s => {
+            stream = s;
+            video.srcObject = stream;
+          })
+          .catch(err => {
+            alert("Cannot access webcam: " + err.message);
+            showUpload();
+          });
+      }
+    }
+
+    uploadOptionBtn.addEventListener('click', showUpload);
+    webcamOptionBtn.addEventListener('click', showWebcam);
+captureBtn.addEventListener('click', () => {
+  const maxWidth = 640;
+  const maxHeight = 480;
+  let width = video.videoWidth;
+  let height = video.videoHeight;
+
+  if (width > maxWidth) {
+    height = height * (maxWidth / width);
+    width = maxWidth;
+  }
+  if (height > maxHeight) {
+    width = width * (maxHeight / height);
+    height = maxHeight;
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, width, height);
+
+  canvas.style.display = 'block';
+  video.style.display = 'none';
+  captureBtn.style.display = 'none';
+
+  // 0.7 compress quality lowers size further
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+  capturedImageInput.value = dataUrl;
+});
+
+
+
+
+    form.addEventListener('submit', (e) => {
+      if (uploadOptionBtn.classList.contains('active')) {
+        // Upload mode: ensure file selected
+        if (!fileInput.files.length) {
+          e.preventDefault();
+          alert('Please select an image file to upload.');
+        }
+      } else {
+        // Webcam mode: ensure photo captured
+        if (!capturedImageInput.value) {
+          e.preventDefault();
+          alert('Please capture a photo from the webcam.');
+        }
+      }
+    });
+
+    // Initialize page with upload mode
+    showUpload();
+  </script>
+
+</body>
+</html>
